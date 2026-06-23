@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { bookingOptions } from "@/data/dahua";
 import { SectionHeader } from "./SectionHeader";
+import { supabase } from "@/lib/supabase";
 
 const contacts = [
   {
@@ -31,16 +32,37 @@ const contacts = [
 
 export function BookingSection() {
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", phone: "", pkg: "", note: "" });
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const { error: dbError } = await supabase.from("bookings").insert({
+      name: form.name,
+      phone: form.phone,
+      package: form.pkg,
+      note: form.note,
+      source: "dhl1688",
+    });
+
+    if (dbError) {
+      setError("預約儲存失敗，請稍後再試或直接來電。");
+      setLoading(false);
+      return;
+    }
+
     const msg = `【大華醫事檢驗所預約諮詢】\n姓名：${form.name}\n電話：${form.phone}\n諮詢套組：${form.pkg}\n備註：${form.note}`;
     window.open(
       `https://line.me/R/oaMessage/@932cczax/?text=${encodeURIComponent(msg)}`,
       "_blank",
     );
+
     setSent(true);
+    setLoading(false);
     window.setTimeout(() => {
       setSent(false);
       setForm({ name: "", phone: "", pkg: "", note: "" });
@@ -61,7 +83,7 @@ export function BookingSection() {
               <div className="contact-icon">{c.icon}</div>
               <div className="contact-title">{c.title}</div>
               <div className="contact-info">{c.info}</div>
-              <a
+              
                 href={c.href}
                 className="contact-link"
                 {...(c.external ? { target: "_blank", rel: "noreferrer" } : {})}
@@ -74,6 +96,11 @@ export function BookingSection() {
         <div className="booking-form-container">
           <h3 className="form-title">預約專業諮詢</h3>
           <p className="form-desc">填寫以下資料，我們將於工作日 24 小時內與您聯繫確認。</p>
+          {error && (
+            <p style={{ color: "#f87171", textAlign: "center", marginBottom: "16px", fontSize: "14px" }}>
+              {error}
+            </p>
+          )}
           {!sent ? (
             <form onSubmit={handleSubmit}>
               <div className="form-group">
@@ -116,7 +143,9 @@ export function BookingSection() {
                 onChange={(e) => setForm({ ...form, note: e.target.value })}
                 required
               />
-              <button type="submit" className="form-submit">💬 透過 LINE 送出預約</button>
+              <button type="submit" className="form-submit" disabled={loading}>
+                {loading ? "送出中..." : "💬 透過 LINE 送出預約"}
+              </button>
             </form>
           ) : (
             <div className="form-success">
