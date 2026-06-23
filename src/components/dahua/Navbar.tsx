@@ -5,8 +5,8 @@ const links = [
   { href: "#gene", label: "基因檢測" },
   { href: "#specialized", label: "專項檢驗" },
   { href: "#products", label: "保健產品" },
-  { href: "mal1688/index.html", label: "專業複合鈣" },
-  { href: "heychew1688/index.html", label: "寵物零嘴" },
+  { href: "/mal1688/index.html", label: "專業複合鈣" },
+  { href: "/heychew1688/index.html", label: "寵物零嘴" },
 ];
 
 export function Navbar() {
